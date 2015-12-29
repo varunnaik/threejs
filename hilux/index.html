@@ -1,0 +1,186 @@
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>March of the vehicles</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				color: #000;
+				font-family:Monospace;
+				font-size:13px;
+				text-align:center;
+				font-weight: bold;
+
+				background-color: #fff;
+				margin: 0px;
+				overflow: hidden;
+			}
+
+			#info {
+				color:#000;
+				position: absolute;
+				top: 0px; width: 100%;
+				padding: 5px;
+
+			}
+
+			a {
+				color: red;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="container"></div>
+		<audio loop><source src="Wagner-Ride_of_the_Valkyries_freetone.at.ua_.mp3" type="audio/mp3"></audio>
+		<script src="three.min.js"></script>
+
+		<script src="OrbitControls.js"></script>
+
+		<script src="Detector.js"></script>
+		<script src="stats.min.js"></script>
+
+		<script>
+			var audio = document.querySelector('audio');
+			audio.play()
+			audio.volume = 0.1;
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var stats;
+
+			var camera, controls, scene, renderer;
+
+			var meshes = [];
+
+			init();
+			animate();
+
+			function init() {
+
+				scene = new THREE.Scene();
+				scene.fog = new THREE.FogExp2( 0xcccccc, 0.002 );
+
+				renderer = new THREE.WebGLRenderer({alpha:true});
+				renderer.setClearColor( scene.fog.color );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				var container = document.getElementById( 'container' );
+				container.appendChild( renderer.domElement );
+
+				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 1000 );
+				camera.position.z = 500;
+
+				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				//controls.addEventListener( 'change', render ); // add this only if there is no animation loop (requestAnimationFrame)
+				controls.enableDamping = true;
+				controls.dampingFactor = 0.25;
+				controls.enableZoom = true;
+				controls.enablePan = false;
+
+				// world
+
+				//var geometry = new THREE.CylinderGeometry( 0, 10, 30, 4, 1 );
+				//var material =  new THREE.MeshPhongMaterial( { color:0xffffff, shading: THREE.FlatShading } );
+
+				var loader = new THREE.JSONLoader( );
+	        	loader.load( 'pickup.js', function ( geometry ) {
+	        		
+		        	// Texture the car
+		            var materials =  [
+		            	new THREE.MeshPhongMaterial( { color:0xcccccc, shading:THREE.SmoothShading } ),
+						new THREE.MeshPhongMaterial( { color:0x999999, shading:THREE.SmoothShading } ),
+						new THREE.MeshPhongMaterial( { color:0x888888, shading:THREE.SmoothShading } ),
+						new THREE.MeshPhongMaterial( { color:0x666666, shading:THREE.SmoothShading } ),
+		            ]
+
+					for ( var i = 0; i < 1200; i ++ ) {
+
+						var mesh = new THREE.Mesh( geometry, materials[Math.floor(Math.random()*materials.length)] );						
+						mesh.position.x = ( Math.random() - 0.5 ) * 1300;
+						mesh.position.y = ( Math.random() - 0.5 ) * 1300;
+						mesh.position.z = ( Math.random() - 0.5 ) * 1300;
+
+						mesh.scale.set(17, 17, 17);
+
+						mesh.rotation.y = Math.PI;
+
+						mesh.updateMatrix();
+						mesh.matrixAutoUpdate = false;
+						meshes.push(mesh);
+						scene.add( mesh );
+						
+					}
+	        });
+
+
+				
+
+				// lights
+
+				light = new THREE.DirectionalLight( 0xffffff );
+				light.position.set( 1, 1, 1 );
+				scene.add( light );
+
+				light = new THREE.DirectionalLight( 0x002288 );
+				light.position.set( -1, -1, -1 );
+				scene.add( light );
+
+				light = new THREE.AmbientLight( 0x222222 );
+				scene.add( light );
+
+				//
+
+				stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.top = '0px';
+				stats.domElement.style.zIndex = 100;
+				container.appendChild( stats.domElement );
+
+				//
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function animate() {
+
+				for (var i = 0; i < meshes.length; i++) {
+					meshes[i].position.z += 1;
+					if (meshes[i].position.z > 600) {
+						meshes[i].position.z = -600;
+					}
+					meshes[i].updateMatrix();
+				}
+
+				requestAnimationFrame( animate );
+
+				controls.update(); // required if controls.enableDamping = true, or if controls.autoRotate = true
+
+				stats.update();
+
+				render();
+
+			}
+
+			function render() {
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+
+	</body>
+</html>
