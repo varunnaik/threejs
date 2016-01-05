@@ -1,0 +1,137 @@
+<html>
+	<head>
+		<title>Crazy orbits</title>
+		<style>
+			body { margin: 0; 
+			background: url(images/space_pano.png) top left no-repeat, url(images/Red_Nebula.png) top left no-repeat;
+				background-size: cover;
+				background-blend-mode: screen;}
+			canvas { width: 100%; height: 100%; }
+			canvas {
+				background: url(images/space_pano.png) top left no-repeat, url(images/Red_Nebula.png) top left no-repeat;
+				background-size: cover;
+				background-blend-mode: screen;
+			}
+		</style>
+	</head>
+	<body>
+		<script src="js/three.min.js"></script>
+		<script src="js/OrbitControls.js"></script>
+		<script src="js/controls.js"></script>
+		<script>
+			// Set up the camera, scene, and renderer
+			camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 10000 );
+			scene = new THREE.Scene();
+       		renderer = new THREE.WebGLRenderer({alpha: true, antialiasing: true});
+       		renderer.setSize( window.innerWidth, window.innerHeight );
+			document.body.appendChild( renderer.domElement );
+			mesh = [];
+			sizes = [
+				{position: [-50, 50, 50], scale: [0.015, 0.015, 0.015], orbitSpeed: 0.5, orbitAngle: 0, orbitRadius: 120},
+				{position: [-120, 35, 0], scale: [0.03, 0.03, 0.03], orbitSpeed: 0.25, orbitAngle: 0, orbitRadius: 100},
+				{position: [-80, -35, 0], scale: [0.05, 0.05, 0.05], orbitSpeed: 0.3, orbitAngle: 0, orbitRadius: 90, vertical: true},
+				{position: [-40, -45, 0], scale: [0.07, 0.07, 0.07], orbitSpeed: 0.3, orbitAngle: 0, orbitRadius: 140}
+			];
+			// Load the planet
+			var loader = new THREE.JSONLoader( );
+	        loader.load( 'models/planet.js', function ( geometry ) {
+	        	// Texture the planet
+	            var material = new THREE.MeshLambertMaterial({
+					map: THREE.ImageUtils.loadTexture('models/Texture/Planet_Diffuse.png')
+				});
+
+				geometry.center();
+				planetMesh =  new THREE.Mesh(
+					geometry,
+					material
+				);
+
+				planetMesh.scale.set(0.5,0.5,0.5);
+				scene.add(planetMesh);
+	        });
+
+			loader.load( 'models/moon.js', function ( geometry ) {
+				var material = new THREE.MeshLambertMaterial({
+					map: THREE.ImageUtils.loadTexture('models/Textures/Moon.png')
+				});
+				geometry.center();
+	            for (var i = 0; i < sizes.length; i++) {
+					mesh[i] = new THREE.Mesh(
+						geometry,
+						material
+					);
+
+					mesh[i].position.x = sizes[i].position[0];
+					mesh[i].position.y = sizes[i].position[1];
+					mesh[i].position.z = sizes[i].position[2];
+
+					mesh[i].scale.set(sizes[i].scale[0], sizes[i].scale[1], sizes[i].scale[2])
+					// OnDrag rotate the models
+			    	//planetControls = PlanetControls(mesh[i])
+					//
+					scene.add(mesh[i]);
+					//mesh[i].position = new THREE.Vector3(sizes[i].position[0], sizes[i].position[1], sizes[i].position[2])
+				}
+	        });
+
+
+	        
+
+	        // Lighting
+	        var light = new THREE.PointLight("#FFFFee");
+	        light.position.set(-950, 0, 950);
+	        scene.add(light);
+
+			var ambient = new THREE.AmbientLight( "#777777" );
+        	scene.add( ambient );
+        	camera.position.z = 470;
+			camera.lookAt(new THREE.Vector3 (0.0, 0.0, 0.0));
+
+       		
+       		function animate() {
+       			// Turn the planet
+       			if (typeof planetMesh !== 'undefined') {
+       				planetMesh.rotation.y += 0.001;
+       				planetMesh.rotation.z += 0.001;
+       			}
+       			// and its moons
+       			for (var i = 0; i < mesh.length; i++) {
+	       			if (typeof mesh[i] !== 'undefined') {
+	       				mesh[i].rotation.z += 0.007;
+	       			}
+	       			// Orbit the moons
+       				orbit(sizes[i], mesh[i])
+       			}
+
+		        requestAnimationFrame( animate );
+				controls.update();
+		        renderer.autoClear = false;
+	            renderer.clear();
+
+	            renderer.render(scene, camera);
+		        renderer.render( scene, camera );
+		    }
+			controls = new THREE.OrbitControls( camera, renderer.domElement );
+			controls.enableDamping = false;
+			controls.enableZoom = true;
+			controls.enableRotate = true;
+
+			function orbit(moon, mesh) {
+				moon.orbitAngle += moon.orbitSpeed; //advance angle in degrees
+				var orbitAngleInRadians = moon.orbitAngle * Math.PI / 180; //convert to radians
+
+				//update position of earth...
+
+				mesh.position.x = Math.cos(orbitAngleInRadians) * moon.orbitRadius;
+				if (moon.vertical) {
+					mesh.position.y = Math.sin(orbitAngleInRadians) * moon.orbitRadius*2.4;
+				} else {
+					mesh.position.z = Math.sin(orbitAngleInRadians) * moon.orbitRadius*2.4;
+				}
+								
+			}
+
+		    animate();
+		</script>
+	</body>
+</html>
